@@ -1,60 +1,64 @@
 pipeline {
     agent any
 
-    tools {
-        // Install the Maven version configured as "M3" and add it to the path.
-        maven "MAVEN_HOME"
+    environment {
+        SONAR_TOKEN = credentials('sonarqube_token') // Define tu token en Jenkins > Credentials
     }
 
     stages {
-        stage('Clone') {
+        stage('Clonar Repositorio') {
             steps {
-                timeout(time: 2, unit: 'MINUTES'){
-                    git branch: 'main', credentialsId: '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', url: 'https://github.com/dmamanipar/PSD2025-IG2-Proyecto.git'
-                }
+                git branch: 'main',
+                    credentialsId: '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',
+                    url: 'https://github.com/ROSAURA12345/TestWebcapa.git'
             }
         }
-        stage('Build') {
-            steps {
-                timeout(time: 8, unit: 'MINUTES'){
-                    sh "mvn -DskipTests clean package -f SysAlmacen/pom.xml"
-                }
-            }
-        }
-        stage('Test') {
-            steps {
-                timeout(time: 10, unit: 'MINUTES'){
-                    // Se cambia <test> por <install> para que se genere el reporte de jacoco
-                    sh "mvn clean install -f SysAlmacen/pom.xml"
-                }
-            }
-        }
-        stage('Sonar') {
-            steps {
-                timeout(time: 4, unit: 'MINUTES'){
-                    withSonarQubeEnv('sonarqube'){
-                        sh "mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.0.2155:sonar -Pcoverage -f SysAlmacen/pom.xml"
-                    }
-                }
-            }
-        }
-        stage('Quality gate') {
-            steps {
 
-                sleep(10) //seconds
+        stage('Instalar Dependencias') {
+            steps {
+                sh 'composer install'
+            }
+        }
 
-                timeout(time: 4, unit: 'MINUTES'){
+        stage('Configurar Entorno') {
+            steps {
+                sh 'cp .env.example .env'
+                sh 'php artisan key:generate'
+            }
+        }
+
+        stage('Migrar Base de Datos') {
+            steps {
+                sh 'php artisan migrate --seed'
+            }
+        }
+
+        stage('Ejecutar Pruebas') {
+            steps {
+                sh 'php artisan test'
+            }
+        }
+
+        stage('Análisis con SonarQube') {
+            steps {
+                withSonarQubeEnv('sonarqube') {
+                    sh """
+                        sonar-scanner \
+                        -Dsonar.projectKey=TestWebcapa \
+                        -Dsonar.sources=app \
+                        -Dsonar.php.coverage.reportPaths=storage/coverage.xml \
+                        -Dsonar.host.url=http://localhost:9000 \
+                        -Dsonar.login=$SONAR_TOKEN
+                    """
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 2, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
-            }
-        }
-        stage('Deploy') {
-            steps {
-			    timeout(time: 8, unit: 'MINUTES'){
-					// Ejecutar mvn spring-boot:run
-					echo "mvn spring-boot:run -f SysAlmacen/pom.xml"
-                }			
-                //echo "mvn spring-boot:run -f SysAlmacen/pom.xml"
             }
         }
     }
