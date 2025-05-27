@@ -48,15 +48,19 @@ pipeline {
             steps {
                 timeout(time: 2, unit: 'MINUTES') {
                     sh '''
-                        # Asegúrate de copiar el archivo .env.example correctamente
-                        cp "/var/jenkins_home/workspace/Bakend place/reservasback/.env.example" .env || echo ".env.example no encontrado"
+                        # Asegurarse de que estamos en el directorio correcto
+                        cd /var/jenkins_home/workspace/Bakend\ place/reservasback
                         
-                        # Genera la clave de Laravel
-                        php artisan key:generate
+                        # Copiar el archivo .env.example
+                        cp .env.example .env || echo ".env.example no encontrado"
+                        
+                        # Generar la clave de Laravel
+                        php artisan key:generate || echo "No se pudo ejecutar php artisan key:generate"
                     '''
                 }
             }
         }
+
 
 
         stage('Migrar y Poblar Base de Datos') {
