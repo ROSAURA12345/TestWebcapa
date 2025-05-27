@@ -49,7 +49,7 @@ pipeline {
                 timeout(time: 2, unit: 'MINUTES') {
                     sh '''
                         # Asegurarse de que estamos en el directorio correcto
-                        cd /var/jenkins_home/workspace/Bakend\ place/reservasback
+                        cd /var/jenkins_home/workspace/'Bakend place'/reservasback
                         
                         # Copiar el archivo .env.example
                         cp .env.example .env || echo ".env.example no encontrado"
@@ -60,7 +60,6 @@ pipeline {
                 }
             }
         }
-
 
 
         stage('Migrar y Poblar Base de Datos') {
