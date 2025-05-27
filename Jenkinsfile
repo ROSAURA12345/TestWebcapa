@@ -5,7 +5,6 @@ pipeline {
         SONAR_TOKEN = credentials('Sonarqube') // Este ID debe existir en Jenkins > Credentials
     }
 
-
     stages {
         stage('Clonar Repositorio') {
             steps {
@@ -23,18 +22,19 @@ pipeline {
                     sh '''
                         # Verifica si Composer está disponible globalmente
                         if ! command -v composer > /dev/null; then
-                            echo "❌ Composer no está instalado. Abortando pipeline."
-                            exit 1
+                            echo "❌ Composer no está instalado. Instalando Composer..."
+                            # Descargar e instalar Composer si no está instalado
+                            curl -sS https://getcomposer.org/installer | php
+                            mv composer.phar /usr/local/bin/composer
+                            echo "✅ Composer instalado con éxito"
+                        else
+                            echo "✅ Composer ya está instalado"
                         fi
-                        echo "✅ Composer está instalado"
-
-                        # Usar la ruta completa a composer.phar si es necesario
-                        php D:/TestWebcapa/reservasback/composer.phar install
+                        composer install
                     '''
                 }
             }
         }
-
 
         stage('Configurar Entorno Laravel') {
             steps {
