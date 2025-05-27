@@ -22,19 +22,21 @@ pipeline {
                     sh '''
                         # Verifica si Composer está disponible globalmente
                         if ! command -v composer > /dev/null; then
-                            echo "❌ Composer no está instalado. Instalando Composer..."
-                            # Descargar e instalar Composer si no está instalado
-                            curl -sS https://getcomposer.org/installer | php
-                            mv composer.phar /usr/local/bin/composer
-                            echo "✅ Composer instalado con éxito"
-                        else
-                            echo "✅ Composer ya está instalado"
+                            echo "❌ Composer no está instalado. Abortando pipeline."
+                            exit 1
                         fi
+                        echo "✅ Composer ya está instalado"
+                        
+                        # Cambiar al directorio de reservasback
+                        cd /var/jenkins_home/workspace/Bakend\ place/reservasback
+
+                        # Ejecutar composer install en el directorio correcto
                         composer install
                     '''
                 }
             }
         }
+
 
         stage('Configurar Entorno Laravel') {
             steps {
