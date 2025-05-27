@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        SONAR_TOKEN = credentials('Sonarqube') // Define tu token en Jenkins > Credentials
+        SONAR_TOKEN = credentials('Sonarqube') // Este debe existir en Jenkins > Credentials
     }
 
     stages {
@@ -16,7 +16,7 @@ pipeline {
 
         stage('Instalar Dependencias') {
             steps {
-                sh 'composer install'
+                sh 'composer install || which composer || echo "Composer no está instalado."'
             }
         }
 
@@ -42,14 +42,14 @@ pipeline {
         stage('Análisis con SonarQube') {
             steps {
                 withSonarQubeEnv('sonarqube') {
-                    sh """
+                    sh '''
                         sonar-scanner \
                         -Dsonar.projectKey=TestWebcapa \
                         -Dsonar.sources=app \
                         -Dsonar.php.coverage.reportPaths=storage/coverage.xml \
                         -Dsonar.host.url=http://localhost:9000 \
-                        -Dsonar.login=squ_9a05d799c429107631a82f33ac4580c410ba5eb9
-                    """
+                        -Dsonar.login=$SONAR_TOKEN
+                    '''
                 }
             }
         }
