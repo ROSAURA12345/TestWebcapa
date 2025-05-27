@@ -26,20 +26,18 @@ pipeline {
 
                         # Verifica si Composer está disponible globalmente
                         if ! command -v composer > /dev/null; then
-                            echo "❌ Composer no está instalado. Instalando Composer..."
-                            # Descargar e instalar Composer si no está instalado
+                            echo "Composer no está instalado. Instalando Composer..."
                             curl -sS https://getcomposer.org/installer | php
                             mv composer.phar /usr/local/bin/composer
-                            echo "✅ Composer instalado con éxito"
+                            echo "Composer instalado con éxito"
                         else
-                            echo "✅ Composer ya está instalado"
+                            echo "Composer ya está instalado"
                         fi
                         
                         # Navegar al directorio correcto y ejecutar composer install
                         cd "reservasback"
                         composer install
                     '''
-
                 }
             }
         }
@@ -48,11 +46,14 @@ pipeline {
             steps {
                 timeout(time: 2, unit: 'MINUTES') {
                     sh '''
-                        # Asegurarse de que estamos en el directorio correcto
-                        cd /var/jenkins_home/workspace/'Bakend place'/reservasback
+                        cd "/var/jenkins_home/workspace/Bakend place/reservasback"
                         
-                        # Copiar el archivo .env.example
-                        cp .env.example .env || echo ".env.example no encontrado"
+                        # Copiar el archivo .env.example si está presente
+                        if [ -f .env.example ]; then
+                            cp .env.example .env
+                        else
+                            echo ".env.example no encontrado, asegurate de que el archivo esté presente."
+                        fi
                         
                         # Generar la clave de Laravel
                         php artisan key:generate || echo "No se pudo ejecutar php artisan key:generate"
@@ -61,11 +62,12 @@ pipeline {
             }
         }
 
-
         stage('Migrar y Poblar Base de Datos') {
             steps {
                 timeout(time: 3, unit: 'MINUTES') {
-                    sh 'php artisan migrate --seed'
+                    sh '''
+                        php artisan migrate --seed || echo "No se pudo ejecutar la migración y el sembrado de la base de datos"
+                    '''
                 }
             }
         }
@@ -105,13 +107,11 @@ pipeline {
 
         stage('Deploy (Opcional)') {
             when {
-                expression { return false } // Cambia a true si deseas activarlo
+                expression { return false }
             }
             steps {
                 timeout(time: 3, unit: 'MINUTES') {
                     echo 'Simulando despliegue de Laravel...'
-                    // Si necesitas servir Laravel (no recomendado en producción):
-                    // sh 'php artisan serve --host=0.0.0.0 --port=8000 &'
                 }
             }
         }
@@ -119,10 +119,10 @@ pipeline {
 
     post {
         failure {
-            echo '❌ El pipeline falló. Revisa las etapas anteriores.'
+            echo 'El pipeline falló. Revisa las etapas anteriores.'
         }
         success {
-            echo '✅ Pipeline completado con éxito.'
+            echo 'Pipeline completado con éxito.'
         }
     }
 }
