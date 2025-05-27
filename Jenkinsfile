@@ -21,17 +21,20 @@ pipeline {
             steps {
                 timeout(time: 3, unit: 'MINUTES') {
                     sh '''
+                        # Verifica si Composer está disponible globalmente
                         if ! command -v composer > /dev/null; then
                             echo "❌ Composer no está instalado. Abortando pipeline."
                             exit 1
                         fi
-
                         echo "✅ Composer está instalado"
-                        composer install
+
+                        # Usar la ruta completa a composer.phar si es necesario
+                        php D:/TestWebcapa/reservasback/composer.phar install
                     '''
                 }
             }
         }
+
 
         stage('Configurar Entorno Laravel') {
             steps {
