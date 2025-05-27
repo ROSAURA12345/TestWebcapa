@@ -5,10 +5,6 @@ pipeline {
         SONAR_TOKEN = credentials('Sonarqube') // Este ID debe existir en Jenkins > Credentials
     }
 
-    tools {
-        // Solo si has configurado Composer como herramienta en Jenkins
-        // composer 'Composer 2'
-    }
 
     stages {
         stage('Clonar Repositorio') {
