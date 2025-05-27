@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        SONAR_TOKEN = credentials('sonarqube_token') // Define tu token en Jenkins > Credentials
+        SONAR_TOKEN = credentials('Sonarqube') // Define tu token en Jenkins > Credentials
     }
 
     stages {
@@ -48,7 +48,7 @@ pipeline {
                         -Dsonar.sources=app \
                         -Dsonar.php.coverage.reportPaths=storage/coverage.xml \
                         -Dsonar.host.url=http://localhost:9000 \
-                        -Dsonar.login=$SONAR_TOKEN
+                        -Dsonar.login=squ_9a05d799c429107631a82f33ac4580c410ba5eb9
                     """
                 }
             }
