@@ -30,11 +30,15 @@ pipeline {
                         else
                             echo "✅ Composer ya está instalado"
                         fi
+                        
+                        # Navegar al directorio correcto y ejecutar composer install
+                        cd reservasback
                         composer install
                     '''
                 }
             }
         }
+
 
         stage('Configurar Entorno Laravel') {
             steps {
