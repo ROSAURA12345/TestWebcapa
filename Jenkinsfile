@@ -21,8 +21,8 @@ pipeline {
                 timeout(time: 3, unit: 'MINUTES') {
                     sh '''
                         # Asegurarse de que los permisos estén correctamente configurados
-                        chown -R jenkins:jenkins /var/jenkins_home/workspace/Bakend\ place
-                        chmod -R 775 /var/jenkins_home/workspace/Bakend\ place
+                        chown -R jenkins:jenkins "/var/jenkins_home/workspace/Bakend place"
+                        chmod -R 775 "/var/jenkins_home/workspace/Bakend place"
 
                         # Verifica si Composer está disponible globalmente
                         if ! command -v composer > /dev/null; then
@@ -36,14 +36,13 @@ pipeline {
                         fi
                         
                         # Navegar al directorio correcto y ejecutar composer install
-                        cd reservasback
+                        cd "reservasback"
                         composer install
                     '''
+
                 }
             }
         }
-
-
 
         stage('Configurar Entorno Laravel') {
             steps {
