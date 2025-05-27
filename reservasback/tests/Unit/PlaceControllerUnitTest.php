@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Http\Controllers\Api\PlaceController;
+use App\Models\Place;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -105,7 +106,7 @@ class PlaceControllerUnitTest extends TestCase
     public function update_validates_and_updates_place()
     {
         $placeMock = Mockery::mock('alias:App\\Models\\Place');
-        $existing = Mockery::mock(App\Models\Place::class)->makePartial();
+        $existing = Mockery::mock(Place::class)->makePartial();
 
         $placeMock
             ->shouldReceive('findOrFail')
@@ -133,7 +134,7 @@ class PlaceControllerUnitTest extends TestCase
     public function destroy_deletes_place_and_returns_204()
     {
         $placeMock = Mockery::mock('alias:App\\Models\\Place');
-        $existing = Mockery::mock(App\Models\Place::class)->makePartial();
+        $existing = Mockery::mock(Place::class)->makePartial();
         $existing->image_url = '/storage/test.jpg';
 
         $placeMock
