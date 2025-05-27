@@ -20,6 +20,10 @@ pipeline {
             steps {
                 timeout(time: 3, unit: 'MINUTES') {
                     sh '''
+                        # Asegurarse de que los permisos estén correctamente configurados
+                        chown -R jenkins:jenkins /var/jenkins_home/workspace/Bakend\ place
+                        chmod -R 775 /var/jenkins_home/workspace/Bakend\ place
+
                         # Verifica si Composer está disponible globalmente
                         if ! command -v composer > /dev/null; then
                             echo "❌ Composer no está instalado. Instalando Composer..."
@@ -38,6 +42,7 @@ pipeline {
                 }
             }
         }
+
 
 
         stage('Configurar Entorno Laravel') {
