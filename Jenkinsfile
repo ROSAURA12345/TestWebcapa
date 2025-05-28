@@ -48,7 +48,8 @@ pipeline {
                 timeout(time: 3, unit: 'MINUTES') {
                     sh '''
                         cd reservasback
-                        php artisan migrate --seed || echo "Migración falló, revisa si ya fue aplicada antes."
+                        php artisan config:clear
+                        php artisan migrate:fresh --seed || echo "Migración falló, puede que ya esté aplicada"
                     '''
                 }
             }
