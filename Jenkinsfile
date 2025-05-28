@@ -68,7 +68,7 @@ pipeline {
 
         stage('Análisis con SonarQube') {
             steps {
-                timeout(time: 4, unit: 'MINUTES') {
+                timeout(time: 10, unit: 'MINUTES') {
                     withSonarQubeEnv('sonarqube') {
                         sh '''
                             cd reservasback
