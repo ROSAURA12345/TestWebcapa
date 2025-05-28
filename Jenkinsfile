@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        SONAR_TOKEN = credentials('Sonarqube') // Este ID debe existir en Jenkins > Credentials
+        SONAR_TOKEN = credentials('Sonarqube') // ID del token en Jenkins > Credentials
     }
 
     stages {
@@ -10,32 +10,17 @@ pipeline {
             steps {
                 timeout(time: 2, unit: 'MINUTES') {
                     git branch: 'main',
-                        credentialsId: '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', // Reemplaza con tu ID registrado
+                        credentialsId: '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', // Reemplaza con tu ID real
                         url: 'https://github.com/ROSAURA12345/TestWebcapa.git'
                 }
             }
         }
 
-        stage('Verificar Composer e Instalar Dependencias') {
+        stage('Instalar Dependencias con Composer') {
             steps {
-                timeout(time: 3, unit: 'MINUTES') {
+                timeout(time: 4, unit: 'MINUTES') {
                     sh '''
-                        # Asegurarse de que los permisos estén correctamente configurados
-                        chown -R jenkins:jenkins "/var/jenkins_home/workspace/Bakend place"
-                        chmod -R 775 "/var/jenkins_home/workspace/Bakend place"
-
-                        # Verifica si Composer está disponible globalmente
-                        if ! command -v composer > /dev/null; then
-                            echo "Composer no está instalado. Instalando Composer..."
-                            curl -sS https://getcomposer.org/installer | php
-                            mv composer.phar /usr/local/bin/composer
-                            echo "Composer instalado con éxito"
-                        else
-                            echo "Composer ya está instalado"
-                        fi
-                        
-                        # Navegar al directorio correcto y ejecutar composer install
-                        cd "reservasback"
+                        cd reservasback
                         composer install
                     '''
                 }
@@ -46,17 +31,13 @@ pipeline {
             steps {
                 timeout(time: 2, unit: 'MINUTES') {
                     sh '''
-                        cd "/var/jenkins_home/workspace/Bakend place/reservasback"
-                        
-                        # Copiar el archivo .env.example si está presente
-                        if [ -f .env.example ]; then
-                            cp .env.example .env
-                        else
-                            echo ".env.example no encontrado, asegurate de que el archivo esté presente."
+                        cd reservasback
+
+                        if [ ! -f .env ]; then
+                          cp .env.example .env
                         fi
-                        
-                        # Generar la clave de Laravel
-                        php artisan key:generate || echo "No se pudo ejecutar php artisan key:generate"
+
+                        php artisan key:generate
                     '''
                 }
             }
@@ -66,16 +47,20 @@ pipeline {
             steps {
                 timeout(time: 3, unit: 'MINUTES') {
                     sh '''
-                        php artisan migrate --seed || echo "No se pudo ejecutar la migración y el sembrado de la base de datos"
+                        cd reservasback
+                        php artisan migrate --seed || echo "Migración falló, revisa si ya fue aplicada antes."
                     '''
                 }
             }
         }
 
-        stage('Ejecutar Pruebas') {
+        stage('Ejecutar Pruebas y Generar Cobertura') {
             steps {
-                timeout(time: 4, unit: 'MINUTES') {
-                    sh 'php artisan test'
+                timeout(time: 5, unit: 'MINUTES') {
+                    sh '''
+                        cd reservasback
+                        ./vendor/bin/phpunit --coverage-clover storage/coverage.xml
+                    '''
                 }
             }
         }
@@ -85,12 +70,13 @@ pipeline {
                 timeout(time: 4, unit: 'MINUTES') {
                     withSonarQubeEnv('sonarqube') {
                         sh '''
+                            cd reservasback
                             sonar-scanner \
-                            -Dsonar.projectKey=TestWebcapa \
-                            -Dsonar.sources=app \
-                            -Dsonar.php.coverage.reportPaths=storage/coverage.xml \
-                            -Dsonar.host.url=http://localhost:9000 \
-                            -Dsonar.login=$SONAR_TOKEN
+                              -Dsonar.projectKey=TestWebcapa \
+                              -Dsonar.sources=app \
+                              -Dsonar.host.url=http://localhost:9000 \
+                              -Dsonar.php.coverage.reportPaths=storage/coverage.xml \
+                              -Dsonar.login=$SONAR_TOKEN
                         '''
                     }
                 }
@@ -99,30 +85,28 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
+                sleep(10) // da tiempo a Sonar para procesar
                 timeout(time: 2, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
         }
 
-        stage('Deploy (Opcional)') {
-            when {
-                expression { return false }
-            }
+        stage('Despliegue (Opcional)') {
             steps {
                 timeout(time: 3, unit: 'MINUTES') {
-                    echo 'Simulando despliegue de Laravel...'
+                    echo 'Simulación de despliegue completada. Puedes integrar con Forge, Docker u otro.'
                 }
             }
         }
     }
 
     post {
-        failure {
-            echo 'El pipeline falló. Revisa las etapas anteriores.'
-        }
         success {
-            echo 'Pipeline completado con éxito.'
+            echo '✅ Pipeline ejecutado con éxito.'
+        }
+        failure {
+            echo '❌ Error en alguna etapa del pipeline.'
         }
     }
 }
