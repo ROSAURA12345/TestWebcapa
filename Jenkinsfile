@@ -75,7 +75,7 @@ pipeline {
                             sonar-scanner \
                               -Dsonar.projectKey=TestWebcapa \
                               -Dsonar.sources=app \
-                              -Dsonar.host.url=http://localhost:9000 \
+                              -Dsonar.host.url=http://docker.sonar:9000 \
                               -Dsonar.php.coverage.reportPaths=storage/coverage.xml \
                               -Dsonar.login=$SONAR_TOKEN
                         '''
