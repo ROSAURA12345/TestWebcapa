@@ -23,10 +23,8 @@ class PlaceControllerUnitTest extends TestCase
     /** @test */
     public function index_returns_all_places()
     {
-        // Alias mock para interceptar llamadas estáticas
-        $placeMock = Mockery::mock(Place::class);
+        $placeMock = Mockery::mock('alias:App\\Models\\Place');
 
-        // Colección de prueba
         $fakePlaces = collect([(object)['id' => 1, 'name' => 'A']]);
 
         $placeMock
@@ -34,6 +32,7 @@ class PlaceControllerUnitTest extends TestCase
             ->once()
             ->with('created_at', 'desc')
             ->andReturnSelf();
+
         $placeMock
             ->shouldReceive('get')
             ->once()
@@ -49,8 +48,8 @@ class PlaceControllerUnitTest extends TestCase
     /** @test */
     public function show_returns_the_requested_place()
     {
-        $placeMock = Mockery::mock(Place::class);
-        $fakePlace = new Place(['id' => 42, 'name' => 'Mi Lugar']);
+        $placeMock = Mockery::mock('alias:App\\Models\\Place');
+        $fakePlace = new \App\Models\Place(['id' => 42, 'name' => 'Mi Lugar']);
 
         $placeMock
             ->shouldReceive('findOrFail')
@@ -68,7 +67,6 @@ class PlaceControllerUnitTest extends TestCase
     /** @test */
     public function store_validates_and_creates_place_with_image()
     {
-        // Mock Storage para store de archivo
         Storage::shouldReceive('disk')->with('public')->andReturnSelf();
         Storage::shouldReceive('putFileAs')->andReturn('places/fake.jpg');
 
@@ -84,7 +82,7 @@ class PlaceControllerUnitTest extends TestCase
         ]);
         $request->files->set('image_file', $file);
 
-        $placeMock = Mockery::mock(Place::class);
+        $placeMock = Mockery::mock('alias:App\\Models\\Place');
         $fakePlace = new Place(array_merge($request->all(), [
             'id'        => 99,
             'image_url' => asset('storage/places/fake.jpg'),
@@ -105,7 +103,7 @@ class PlaceControllerUnitTest extends TestCase
     /** @test */
     public function update_validates_and_updates_place()
     {
-        $placeMock = Mockery::mock(Place::class);
+        $placeMock = Mockery::mock('alias:App\\Models\\Place');
         $existing = Mockery::mock(Place::class)->makePartial();
 
         $placeMock
@@ -133,7 +131,7 @@ class PlaceControllerUnitTest extends TestCase
     /** @test */
     public function destroy_deletes_place_and_returns_204()
     {
-        $placeMock = Mockery::mock(Place::class);
+        $placeMock = Mockery::mock('alias:App\\Models\\Place');
         $existing = Mockery::mock(Place::class)->makePartial();
         $existing->image_url = '/storage/test.jpg';
 
@@ -143,7 +141,6 @@ class PlaceControllerUnitTest extends TestCase
             ->with(7)
             ->andReturn($existing);
 
-        // Mock Storage para borrar
         Storage::shouldReceive('disk')->with('public')->andReturnSelf();
         Storage::shouldReceive('delete')->once();
 
@@ -156,6 +153,5 @@ class PlaceControllerUnitTest extends TestCase
 
         $this->assertEquals(204, $response->status());
         $this->assertSame('{}', $response->getContent());
-
     }
 }
