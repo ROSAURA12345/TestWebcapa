@@ -68,21 +68,20 @@ pipeline {
 
         stage('Análisis con SonarQube') {
             steps {
-                timeout(time: 10, unit: 'MINUTES') {
-                    withSonarQubeEnv('sonarqube') {
-                        sh '''
-                            cd reservasback
-                            sonar-scanner \
-                              -Dsonar.projectKey=TestWebcapa \
-                              -Dsonar.sources=app \
-                              -Dsonar.host.url=http://sonarqube:9000 \
-                              -Dsonar.php.coverage.reportPaths=storage/coverage.xml \
-                              -Dsonar.login=$SONAR_TOKEN
-                        '''
-                    }
+                withSonarQubeEnv('sonarqube') {
+                    sh '''
+                        cd reservasback
+                        sonar-scanner \
+                        -Dsonar.projectKey=TestWebcapa \
+                        -Dsonar.sources=app \
+                        -Dsonar.php.coverage.reportPaths=storage/coverage.xml \
+                        -Dsonar.host.url=http://sonarqube:9000 \
+                        -Dsonar.token=$SONAR_TOKEN
+                    '''
                 }
             }
         }
+
 
         stage('Quality Gate') {
             steps {
