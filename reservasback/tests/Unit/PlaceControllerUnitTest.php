@@ -7,151 +7,92 @@ use App\Models\Place;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Mockery;
 use Tests\TestCase;
 
 class PlaceControllerUnitTest extends TestCase
 {
-    use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
-
-    protected function tearDown(): void
-    {
-        Mockery::close();
-        parent::tearDown();
-    }
-
     /** @test */
     public function index_returns_all_places()
     {
-        $placeMock = Mockery::mock('alias:App\\Models\\Place');
-
-        $fakePlaces = collect([(object)['id' => 1, 'name' => 'A']]);
-
-        $placeMock
-            ->shouldReceive('orderBy')
-            ->once()
-            ->with('created_at', 'desc')
-            ->andReturnSelf();
-
-        $placeMock
-            ->shouldReceive('get')
-            ->once()
-            ->andReturn($fakePlaces);
+        // Prepara datos reales en base de datos falsa
+        Place::factory()->create(['name' => 'Lugar 1']);
+        Place::factory()->create(['name' => 'Lugar 2']);
 
         $controller = new PlaceController();
         $response = $controller->index();
 
         $this->assertEquals(200, $response->status());
-        $this->assertEquals($fakePlaces->toJson(), $response->getContent());
+        $this->assertStringContainsString('Lugar 1', $response->getContent());
+        $this->assertStringContainsString('Lugar 2', $response->getContent());
     }
 
     /** @test */
     public function show_returns_the_requested_place()
     {
-        $placeMock = Mockery::mock('alias:App\\Models\\Place');
-        $fakePlace = new \App\Models\Place(['id' => 42, 'name' => 'Mi Lugar']);
-
-        $placeMock
-            ->shouldReceive('findOrFail')
-            ->once()
-            ->with(42)
-            ->andReturn($fakePlace);
+        $place = Place::factory()->create([
+            'name' => 'Machu Picchu'
+        ]);
 
         $controller = new PlaceController();
-        $response = $controller->show(42);
+        $response = $controller->show($place->id);
 
         $this->assertEquals(200, $response->status());
-        $this->assertEquals(json_encode($fakePlace), $response->getContent());
+        $this->assertStringContainsString('Machu Picchu', $response->getContent());
     }
 
     /** @test */
-    public function store_validates_and_creates_place_with_image()
+    public function store_creates_place_with_image()
     {
-        Storage::shouldReceive('disk')->with('public')->andReturnSelf();
-        Storage::shouldReceive('putFileAs')->andReturn('places/fake.jpg');
+        Storage::fake('public');
 
         $file = UploadedFile::fake()->image('foto.jpg');
         $request = Request::create('/api/places', 'POST', [
             'name'      => 'Test',
-            'excerpt'   => 'Excerpt',
-            'activities'=> ['a','b'],
-            'stats'     => ['x'=>1],
-            'latitude'  => 0,
-            'longitude' => 0,
-            'category'  => 'Cat',
+            'excerpt'   => 'Un lugar de prueba',
+            'activities'=> ['nadar'],
+            'stats'     => ['likes' => 20],
+            'latitude'  => 1.2345,
+            'longitude' => 6.7890,
+            'category'  => 'Naturaleza'
         ]);
         $request->files->set('image_file', $file);
-
-        $placeMock = Mockery::mock('alias:App\\Models\\Place');
-        $fakePlace = new Place(array_merge($request->all(), [
-            'id'        => 99,
-            'image_url' => asset('storage/places/fake.jpg'),
-        ]));
-
-        $placeMock
-            ->shouldReceive('create')
-            ->once()
-            ->andReturn($fakePlace);
 
         $controller = new PlaceController();
         $response = $controller->store($request);
 
         $this->assertEquals(201, $response->status());
-        $this->assertEquals(json_encode($fakePlace), $response->getContent());
+        Storage::disk('public')->assertExists('places/' . $file->hashName());
     }
 
     /** @test */
-    public function update_validates_and_updates_place()
+    public function update_modifies_existing_place()
     {
-        $placeMock = Mockery::mock('alias:App\\Models\\Place');
-        $existing = Mockery::mock(Place::class)->makePartial();
-
-        $placeMock
-            ->shouldReceive('findOrFail')
-            ->once()
-            ->with(5)
-            ->andReturn($existing);
-
-        $request = Request::create('/api/places/5', 'PUT', [
-            'name'    => 'New',
-            'excerpt' => 'New Excerpt',
+        $place = Place::factory()->create([
+            'name' => 'Original',
+            'excerpt' => 'Antiguo texto'
         ]);
 
-        $existing
-            ->shouldReceive('update')
-            ->once()
-            ->with($request->all());
+        $request = Request::create("/api/places/{$place->id}", 'PUT', [
+            'name' => 'Actualizado',
+            'excerpt' => 'Nuevo texto',
+        ]);
 
         $controller = new PlaceController();
-        $response = $controller->update($request, 5);
+        $response = $controller->update($request, $place->id);
 
         $this->assertEquals(200, $response->status());
+        $this->assertDatabaseHas('places', ['id' => $place->id, 'name' => 'Actualizado']);
     }
 
     /** @test */
-    public function destroy_deletes_place_and_returns_204()
+    public function destroy_removes_place_and_returns_204()
     {
-        $placeMock = Mockery::mock('alias:App\\Models\\Place');
-        $existing = Mockery::mock(Place::class)->makePartial();
-        $existing->image_url = '/storage/test.jpg';
-
-        $placeMock
-            ->shouldReceive('findOrFail')
-            ->once()
-            ->with(7)
-            ->andReturn($existing);
-
-        Storage::shouldReceive('disk')->with('public')->andReturnSelf();
-        Storage::shouldReceive('delete')->once();
-
-        $existing
-            ->shouldReceive('delete')
-            ->once();
+        $place = Place::factory()->create();
 
         $controller = new PlaceController();
-        $response = $controller->destroy(7);
+        $response = $controller->destroy($place->id);
 
         $this->assertEquals(204, $response->status());
-        $this->assertSame('{}', $response->getContent());
+        $this->assertDatabaseMissing('places', ['id' => $place->id]);
     }
 }
