@@ -19,7 +19,7 @@
         </include>
     </source>
 
-    <coverage processUncoveredFiles="true">
+    <coverage>
         <report>
             <clover outputFile="storage/coverage.xml"/>
             <text outputFile="storage/coverage.txt"/>
