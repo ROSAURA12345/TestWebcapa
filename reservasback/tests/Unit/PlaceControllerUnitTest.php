@@ -24,7 +24,7 @@ class PlaceControllerUnitTest extends TestCase
     public function index_returns_all_places()
     {
         // Alias mock para interceptar llamadas estáticas
-        $placeMock = Mockery::mock('alias:App\\Models\\Place');
+        $placeMock = Mockery::mock(Place::class);
 
         // Colección de prueba
         $fakePlaces = collect([(object)['id' => 1, 'name' => 'A']]);
@@ -49,8 +49,8 @@ class PlaceControllerUnitTest extends TestCase
     /** @test */
     public function show_returns_the_requested_place()
     {
-        $placeMock = Mockery::mock('alias:App\\Models\\Place');
-        $fakePlace = new \App\Models\Place(['id' => 42, 'name' => 'Mi Lugar']);
+        $placeMock = Mockery::mock(Place::class);
+        $fakePlace = new Place(['id' => 42, 'name' => 'Mi Lugar']);
 
         $placeMock
             ->shouldReceive('findOrFail')
@@ -84,8 +84,8 @@ class PlaceControllerUnitTest extends TestCase
         ]);
         $request->files->set('image_file', $file);
 
-        $placeMock = Mockery::mock('alias:App\\Models\\Place');
-        $fakePlace = new \App\Models\Place(array_merge($request->all(), [
+        $placeMock = Mockery::mock(Place::class);
+        $fakePlace = new Place(array_merge($request->all(), [
             'id'        => 99,
             'image_url' => asset('storage/places/fake.jpg'),
         ]));
@@ -105,7 +105,7 @@ class PlaceControllerUnitTest extends TestCase
     /** @test */
     public function update_validates_and_updates_place()
     {
-        $placeMock = Mockery::mock('alias:App\\Models\\Place');
+        $placeMock = Mockery::mock(Place::class);
         $existing = Mockery::mock(Place::class)->makePartial();
 
         $placeMock
@@ -133,7 +133,7 @@ class PlaceControllerUnitTest extends TestCase
     /** @test */
     public function destroy_deletes_place_and_returns_204()
     {
-        $placeMock = Mockery::mock('alias:App\\Models\\Place');
+        $placeMock = Mockery::mock(Place::class);
         $existing = Mockery::mock(Place::class)->makePartial();
         $existing->image_url = '/storage/test.jpg';
 
