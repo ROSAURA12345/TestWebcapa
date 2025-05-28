@@ -18,7 +18,7 @@ pipeline {
 
         stage('Instalar Dependencias con Composer') {
             steps {
-                timeout(time: 4, unit: 'MINUTES') {
+                timeout(time: 8, unit: 'MINUTES') {
                     sh '''
                         cd reservasback
                         composer install
