@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        SONAR_TOKEN = credentials('Sonarqube') // ID del token en Jenkins > Credentials
+        SONAR_TOKEN = credentials('Sonarqube') // Reemplaza con el ID exacto de tu token en Jenkins Credentials
     }
 
     stages {
@@ -10,7 +10,7 @@ pipeline {
             steps {
                 timeout(time: 2, unit: 'MINUTES') {
                     git branch: 'main',
-                        credentialsId: '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', // Reemplaza con tu ID real
+                        credentialsId: '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',
                         url: 'https://github.com/ROSAURA12345/TestWebcapa.git'
                 }
             }
@@ -37,6 +37,11 @@ pipeline {
                           cp .env.example .env
                         fi
 
+                        # Usar entorno de testing para las pruebas
+                        if [ ! -f .env.testing ]; then
+                          cp .env .env.testing
+                        fi
+
                         php artisan key:generate
                     '''
                 }
@@ -60,7 +65,7 @@ pipeline {
                 timeout(time: 5, unit: 'MINUTES') {
                     sh '''
                         cd reservasback
-                        ./vendor/bin/phpunit --coverage-clover storage/coverage.xml
+                        ./vendor/bin/phpunit --configuration phpunit.xml --coverage-clover storage/coverage.xml
                     '''
                 }
             }
@@ -74,6 +79,7 @@ pipeline {
                         sonar-scanner \
                         -Dsonar.projectKey=TestWebcapa \
                         -Dsonar.sources=app \
+                        -Dsonar.tests=tests \
                         -Dsonar.php.coverage.reportPaths=storage/coverage.xml \
                         -Dsonar.host.url=http://sonarqube:9000 \
                         -Dsonar.token=$SONAR_TOKEN
@@ -82,21 +88,18 @@ pipeline {
             }
         }
 
-
         stage('Quality Gate') {
             steps {
-                sleep(10) // da tiempo a Sonar para procesar
+                sleep(time: 10, unit: 'SECONDS') // tiempo para que Sonar procese
                 timeout(time: 2, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
         }
 
-        stage('Despliegue (Opcional)') {
+        stage('Despliegue (Simulado)') {
             steps {
-                timeout(time: 3, unit: 'MINUTES') {
-                    echo 'Simulación de despliegue completada. Puedes integrar con Forge, Docker u otro.'
-                }
+                echo '✅ Simulación de despliegue completada.'
             }
         }
     }
